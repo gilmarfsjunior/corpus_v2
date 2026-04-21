@@ -1,5 +1,6 @@
 <?php
 
+use App\Interfaces\Http\Controllers\ApartmentController;
 use App\Interfaces\Http\Controllers\CaixaController;
 use App\Interfaces\Http\Controllers\ComandaController;
 use App\Interfaces\Http\Controllers\ComandaItemController;
@@ -14,6 +15,8 @@ use App\Interfaces\Http\Controllers\VendaController;
 
 return [
     'GET' => [
+        '/api/apartamentos' => [ApartmentController::class, 'index'],
+        '/api/apartamentos/{id}' => [ApartmentController::class, 'show'],
         '/api/produtos' => [ProdutoController::class, 'index'],
         '/api/produtos/{id}' => [ProdutoController::class, 'show'],
         '/api/comandas' => [ComandaController::class, 'index'],

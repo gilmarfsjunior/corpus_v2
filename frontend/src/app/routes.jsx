@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
+import Home from '../modules/apartment/pages/Home';
 import ProdutoList from '../modules/produto/pages/ProdutoList';
 import ComandaList from '../modules/comanda/pages/ComandaList';
 import ComandaDetails from '../modules/comanda/pages/ComandaDetails';
@@ -31,7 +32,7 @@ export default function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/" element={<ProtectedRoute><Navigate to="/produtos" replace /></ProtectedRoute>} />
+      <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
       <Route path="/produtos" element={<ProtectedRoute><ProdutoList /></ProtectedRoute>} />
       <Route path="/comandas" element={<ProtectedRoute><ComandaList /></ProtectedRoute>} />
       <Route path="/comandas/novo" element={<ProtectedRoute><ComandaForm /></ProtectedRoute>} />
