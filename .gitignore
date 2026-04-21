@@ -11,7 +11,6 @@
 /public/storage
 /.phpunit.result.cache
 /.phpintel
-/base_corpus/*.sql
 Homestead.yaml
 Homestead.json
 npm-debug.log*
