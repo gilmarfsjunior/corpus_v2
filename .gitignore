@@ -1,0 +1,26 @@
+# Laravel / PHP
+/vendor
+/vendor/*
+/node_modules
+/.idea
+/.vscode
+/.env
+/.env.local
+/.env.*.local
+/storage/*.key
+/public/storage
+/.phpunit.result.cache
+/.phpintel
+Homestead.yaml
+Homestead.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.env.example
+
+docker-compose.override.yml
+
+# Vite / React
+/dist
+/build
+/coverage
