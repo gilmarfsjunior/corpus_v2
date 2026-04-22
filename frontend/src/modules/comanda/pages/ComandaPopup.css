@@ -242,6 +242,15 @@
   background-color: #1976D2;
 }
 
+.btn-limpeza {
+  background-color: #FF6B35;
+  color: white;
+}
+
+.btn-limpeza:hover {
+  background-color: #E55A2B;
+}
+
 .btn-conferencia {
   background-color: #FF9800;
   color: white;
