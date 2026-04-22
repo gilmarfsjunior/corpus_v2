@@ -4,6 +4,7 @@ namespace App\Interfaces\Http\Controllers;
 
 use App\Application\Apartment\ListarApartmentsUseCase;
 use App\Application\Apartment\BuscarApartmentUseCase;
+use App\Application\Apartment\AlterarStatusApartmentUseCase;
 use App\Domain\Apartment\Apartment;
 use App\Infrastructure\Database\Connection;
 use App\Infrastructure\Persistence\ApartmentRepository;
@@ -61,5 +62,24 @@ class ApartmentController
             'ativo' => $apartment->isAtivo(),
             'empresaId' => $apartment->getEmpresaId(),
         ]]);
+    }
+
+    public function updateStatus(int $id): Response
+    {
+        $input = json_decode(file_get_contents('php://input'), true);
+        $status = $input['status'] ?? null;
+
+        if (!$status) {
+            return Response::json(['message' => 'Status é obrigatório'], 400);
+        }
+
+        $useCase = new AlterarStatusApartmentUseCase($this->repository);
+        $success = $useCase->execute($id, $status);
+
+        if (!$success) {
+            return Response::json(['message' => 'Erro ao atualizar status'], 500);
+        }
+
+        return Response::json(['message' => 'Status atualizado com sucesso']);
     }
 }

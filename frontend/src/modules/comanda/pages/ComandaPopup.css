@@ -224,22 +224,41 @@
   background-color: #da190b;
 }
 
-@media (max-width: 600px) {
-  .comanda-form form {
-    grid-template-columns: 1fr;
-  }
+.status-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+  text-transform: uppercase;
+}
 
-  .comanda-footer {
-    flex-direction: column;
-    gap: 15px;
-    align-items: stretch;
-  }
+.btn-confirmar {
+  background-color: #2196F3;
+  color: white;
+}
 
-  .actions {
-    width: 100%;
-  }
+.btn-confirmar:hover {
+  background-color: #1976D2;
+}
 
-  .actions button {
-    flex: 1;
-  }
+.btn-conferencia {
+  background-color: #FF9800;
+  color: white;
+}
+
+.btn-conferencia:hover {
+  background-color: #F57C00;
+}
+
+.actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.actions p {
+  margin: 0;
+  font-size: 12px;
+  color: #666;
+  font-style: italic;
 }

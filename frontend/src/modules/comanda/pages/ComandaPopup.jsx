@@ -16,6 +16,7 @@ export default function ComandaPopup() {
   const [apartment, setApartment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [updatingStatus, setUpdatingStatus] = useState(false);
   const [itemForm, setItemForm] = useState({
     CodProduto: '',
     Descricao: '',
@@ -91,6 +92,37 @@ export default function ComandaPopup() {
     }
   };
 
+  const handleStatusChange = async (newStatus) => {
+    if (!apartment) return;
+
+    setUpdatingStatus(true);
+    try {
+      const response = await fetch(`/api/apartamentos/${apartment.id}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao atualizar status');
+      }
+
+      // Recarregar dados após mudança de status
+      loadComanda();
+      
+      // Notificar janela pai sobre mudança de status
+      if (window.opener) {
+        window.opener.postMessage('statusChanged', '*');
+      }
+    } catch (err) {
+      setError('Erro ao alterar status do apartamento');
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
   if (loading) {
     return <div className="comanda-popup"><p>Carregando...</p></div>;
   }
@@ -114,6 +146,14 @@ export default function ComandaPopup() {
 
       <div className="comanda-info">
         <p><strong>Apartamento:</strong> {apartmentInfo}</p>
+        <p><strong>Status:</strong> 
+          <span 
+            className="status-badge" 
+            style={{ backgroundColor: apartment?.statusColor || '#cccccc' }}
+          >
+            {apartment?.statusLabel || 'N/A'}
+          </span>
+        </p>
         <p><strong>Usuário:</strong> {comanda.usuario || 'N/A'}</p>
         <p><strong>Entrada:</strong> {comanda.dataEntrada} às {comanda.horaEntrada}</p>
       </div>
@@ -128,7 +168,7 @@ export default function ComandaPopup() {
                 <th>Qtd</th>
                 <th>Valor</th>
                 <th>Total</th>
-                <th>Ação</th>
+                {(apartment?.status === 'O' || apartment?.status === 'C') && <th>Ação</th>}
               </tr>
             </thead>
             <tbody>
@@ -138,14 +178,16 @@ export default function ComandaPopup() {
                   <td>{item.quantidade}</td>
                   <td>R$ {parseFloat(item.valor).toFixed(2)}</td>
                   <td>R$ {(item.quantidade * item.valor).toFixed(2)}</td>
-                  <td>
-                    <button
-                      onClick={() => handleToggleItem(item.id)}
-                      className={`toggle-btn ${item.ativo ? 'ativo' : 'inativo'}`}
-                    >
-                      {item.ativo ? 'Remover' : 'Readicionar'}
-                    </button>
-                  </td>
+                  {(apartment?.status === 'O' || apartment?.status === 'C') && (
+                    <td>
+                      <button
+                        onClick={() => handleToggleItem(item.id)}
+                        className={`toggle-btn ${item.ativo ? 'ativo' : 'inativo'}`}
+                      >
+                        {item.ativo ? 'Remover' : 'Readicionar'}
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -155,38 +197,40 @@ export default function ComandaPopup() {
         )}
       </div>
 
-      <div className="comanda-form">
-        <h3>Adicionar Item</h3>
-        <form onSubmit={handleAddItem}>
-          <input
-            type="text"
-            name="Descricao"
-            placeholder="Descrição do produto"
-            value={itemForm.Descricao}
-            onChange={handleItemChange}
-            required
-          />
-          <input
-            type="number"
-            name="Quantidade"
-            placeholder="Quantidade"
-            value={itemForm.Quantidade}
-            onChange={handleItemChange}
-            min="1"
-            required
-          />
-          <input
-            type="number"
-            name="Valor"
-            placeholder="Valor"
-            step="0.01"
-            value={itemForm.Valor}
-            onChange={handleItemChange}
-            required
-          />
-          <button type="submit">Adicionar</button>
-        </form>
-      </div>
+      {(apartment?.status === 'O' || apartment?.status === 'C') && (
+        <div className="comanda-form">
+          <h3>Adicionar Item</h3>
+          <form onSubmit={handleAddItem}>
+            <input
+              type="text"
+              name="Descricao"
+              placeholder="Descrição do produto"
+              value={itemForm.Descricao}
+              onChange={handleItemChange}
+              required
+            />
+            <input
+              type="number"
+              name="Quantidade"
+              placeholder="Quantidade"
+              value={itemForm.Quantidade}
+              onChange={handleItemChange}
+              min="1"
+              required
+            />
+            <input
+              type="number"
+              name="Valor"
+              placeholder="Valor"
+              step="0.01"
+              value={itemForm.Valor}
+              onChange={handleItemChange}
+              required
+            />
+            <button type="submit">Adicionar</button>
+          </form>
+        </div>
+      )}
 
       <div className="comanda-footer">
         <div className="total">
@@ -194,7 +238,38 @@ export default function ComandaPopup() {
           <span>R$ {comanda.valorTotal ? parseFloat(comanda.valorTotal).toFixed(2) : '0.00'}</span>
         </div>
         <div className="actions">
-          <button className="btn-finalizar">Finalizar</button>
+          {updatingStatus && <p>Atualizando status...</p>}
+          
+          {apartment?.status === 'L' && (
+            <button 
+              className="btn-confirmar" 
+              onClick={() => handleStatusChange('O')}
+              disabled={updatingStatus}
+            >
+              Confirmar Entrada
+            </button>
+          )}
+          
+          {apartment?.status === 'O' && (
+            <button 
+              className="btn-conferencia" 
+              onClick={() => handleStatusChange('C')}
+              disabled={updatingStatus}
+            >
+              Ir para Conferência
+            </button>
+          )}
+          
+          {apartment?.status === 'C' && (
+            <button 
+              className="btn-finalizar" 
+              onClick={() => handleStatusChange('R')}
+              disabled={updatingStatus}
+            >
+              Finalizar
+            </button>
+          )}
+          
           <button className="btn-cancelar" onClick={() => window.close()}>Cancelar</button>
         </div>
       </div>

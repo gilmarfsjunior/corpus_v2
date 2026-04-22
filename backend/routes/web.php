@@ -52,6 +52,7 @@ return [
         '/api/pagos' => [PagoController::class, 'store'],
     ],
     'PUT' => [
+        '/api/apartamentos/{id}/status' => [ApartmentController::class, 'updateStatus'],
         '/api/comandas/{id}' => [ComandaController::class, 'update'],
         '/api/movimentos/{id}/fechar' => [MovimentoController::class, 'fechar'],
         '/api/vendas/{id}' => [VendaController::class, 'update'],

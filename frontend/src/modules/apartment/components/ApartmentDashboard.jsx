@@ -9,6 +9,16 @@ export default function ApartmentDashboard() {
 
   useEffect(() => {
     fetchApartments();
+
+    // Listener para mensagens da popup de comanda
+    const handleMessage = (event) => {
+      if (event.data === 'statusChanged') {
+        fetchApartments(); // Recarregar apartamentos após mudança de status
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
   }, []);
 
   const fetchApartments = async () => {
