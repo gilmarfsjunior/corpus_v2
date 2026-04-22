@@ -6,11 +6,44 @@ export default function ApartmentDashboard() {
   const [groupedApartments, setGroupedApartments] = useState({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   useEffect(() => {
     fetchApartments();
 
-    // Listener para mensagens da popup de comanda
+    // Polling para atualização automática a cada 5 segundos quando a aba está ativa
+    let pollingInterval;
+
+    const startPolling = () => {
+      pollingInterval = setInterval(() => {
+        if (!document.hidden) { // Só faz polling se a aba estiver ativa
+          fetchApartments();
+        }
+      }, 3000); // 3 segundos - mais frequente com cache inteligente
+    };
+
+    const stopPolling = () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+
+    // Iniciar polling
+    startPolling();
+
+    // Parar polling quando a aba fica invisível, reiniciar quando volta
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        stopPolling();
+      } else {
+        fetchApartments(); // Atualizar imediatamente quando volta
+        startPolling();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Listener para mensagens da popup de comanda (fallback)
     const handleMessage = (event) => {
       if (event.data === 'statusChanged') {
         fetchApartments(); // Recarregar apartamentos após mudança de status
@@ -18,38 +51,78 @@ export default function ApartmentDashboard() {
     };
 
     window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
+
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('message', handleMessage);
+    };
   }, []);
 
-  const fetchApartments = async () => {
+  const fetchApartments = async (force = false) => {
     try {
-      setLoading(true);
-      const response = await fetch('/api/apartamentos');
+      // Só mostrar loading na primeira carga
+      if (apartments.length === 0) {
+        setLoading(true);
+      } else {
+        setIsUpdating(true);
+      }
+      
+      // Se não for forçado e temos dados recentes (menos de 30 segundos), pular
+      if (!force && lastUpdate && (Date.now() - lastUpdate) < 30000) {
+        setIsUpdating(false);
+        return;
+      }
+
+      const response = await fetch('/api/apartamentos', {
+        headers: {
+          'Cache-Control': 'no-cache',
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      });
       
       if (!response.ok) {
         throw new Error('Erro ao buscar apartamentos');
       }
 
       const data = await response.json();
-      setApartments(data.data || []);
+      const newApartments = data.data || [];
 
-      // Agrupar por tipo
-      const grouped = {};
-      (data.data || []).forEach((apt) => {
-        const tipo = apt.tipoDescricao || 'Sem Tipo';
-        if (!grouped[tipo]) {
-          grouped[tipo] = [];
-        }
-        grouped[tipo].push(apt);
-      });
+      // Verificar se houve mudanças reais nos dados
+      const hasChanges = !apartments.length || 
+        newApartments.length !== apartments.length ||
+        newApartments.some((newApt, index) => {
+          const oldApt = apartments[index];
+          return !oldApt || 
+                 newApt.id !== oldApt.id || 
+                 newApt.status !== oldApt.status ||
+                 newApt.numero !== oldApt.numero;
+        });
 
-      setGroupedApartments(grouped);
+      if (hasChanges || force) {
+        setApartments(newApartments);
+
+        // Agrupar por tipo
+        const grouped = {};
+        newApartments.forEach((apt) => {
+          const tipo = apt.tipoDescricao || 'Sem Tipo';
+          if (!grouped[tipo]) {
+            grouped[tipo] = [];
+          }
+          grouped[tipo].push(apt);
+        });
+
+        setGroupedApartments(grouped);
+        setLastUpdate(Date.now());
+      }
+      
       setError(null);
     } catch (err) {
       setError(err.message);
       console.error('Erro:', err);
     } finally {
       setLoading(false);
+      setIsUpdating(false);
     }
   };
 
@@ -70,7 +143,15 @@ export default function ApartmentDashboard() {
 
   return (
     <div className="apartment-dashboard">
-      <h1>Apartamentos Disponíveis</h1>
+      <h1>
+        Apartamentos Disponíveis
+        {isUpdating && <span className="updating-indicator">⟳</span>}
+        {lastUpdate && (
+          <small className="last-update">
+            Última atualização: {new Date(lastUpdate).toLocaleTimeString()}
+          </small>
+        )}
+      </h1>
       
       <div className="apartment-groups">
         {Object.entries(groupedApartments).map(([tipo, apts]) => (

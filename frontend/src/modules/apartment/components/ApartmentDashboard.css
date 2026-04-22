@@ -100,6 +100,37 @@
 }
 
 .apartment-button.r {
+  /* Recebimento - Azul */
+  border-color: #0066cc;
+}
+
+.apartment-button.z {
+  /* Limpeza - Roxo */
+  border-color: #6600cc;
+}
+
+/* Indicador de atualização */
+.updating-indicator {
+  margin-left: 10px;
+  color: #2196f3;
+  animation: spin 1s linear infinite;
+  font-size: 16px;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.last-update {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: #666;
+  font-weight: normal;
+}
+
+.apartment-button.r {
   /* Recebimento - Roxo */
   border-color: #660066;
 }

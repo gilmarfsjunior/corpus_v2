@@ -242,15 +242,6 @@
   background-color: #1976D2;
 }
 
-.btn-limpeza {
-  background-color: #FF6B35;
-  color: white;
-}
-
-.btn-limpeza:hover {
-  background-color: #E55A2B;
-}
-
 .btn-conferencia {
   background-color: #FF9800;
   color: white;
@@ -270,4 +261,31 @@
   font-size: 12px;
   color: #666;
   font-style: italic;
+}
+/* Novos estilos para campos da comanda */
+.comanda-fields {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.field-group {
+  margin-bottom: 10px;
+}
+
+.field-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #555;
+}
+
+.field-group input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
 }

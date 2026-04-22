@@ -17,11 +17,9 @@ export default function ComandaPopup() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
-  const [itemForm, setItemForm] = useState({
-    CodProduto: '',
-    Descricao: '',
-    Quantidade: '1',
-    Valor: '',
+  const [comandaForm, setComandaForm] = useState({
+    Placa: '',
+    ClienteComanda: '',
   });
 
   const loadComanda = async () => {
@@ -35,21 +33,26 @@ export default function ComandaPopup() {
         // Se tem ID direto, busca a comanda existente
         comandaData = await obterComanda(id);
       } else if (apartmentId) {
-        // Se tem ID do apartamento, busca dados do apartamento primeiro
+        // Se tem ID do apartamento, busca ou cria comanda
         const apartResponse = await fetch(`/api/apartamentos/${apartmentId}`);
         const { data: apartData } = await apartResponse.json();
         setApartment(apartData);
 
-        // Só busca comanda se o apartamento NÃO estiver liberado
-        if (apartData.status !== 'L') {
-          const comandaResponse = await fetch(`/api/apartamentos/${apartmentId}/comanda`);
-          const { data } = await comandaResponse.json();
-          comandaData = data;
-        }
-        // Se estiver liberado, comandaData permanece null (tela vazia)
+        // Busca ou cria comanda do apartamento
+        const comandaResponse = await fetch(`/api/apartamentos/${apartmentId}/comanda`);
+        const { data } = await comandaResponse.json();
+        comandaData = data;
       }
 
       setComanda(comandaData);
+
+      // Inicializar campos da comanda se existir
+      if (comandaData) {
+        setComandaForm({
+          Placa: comandaData.placa || '',
+          ClienteComanda: comandaData.clienteComanda || '',
+        });
+      }
     } catch (err) {
       console.error('Erro:', err);
       setError(err.message || 'Erro ao carregar a comanda');
@@ -62,6 +65,14 @@ export default function ComandaPopup() {
     loadComanda();
   }, [id, apartmentId]);
 
+  const handleComandaChange = (event) => {
+    const { name, value } = event.target;
+    setComandaForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   const handleItemChange = (event) => {
     const { name, value } = event.target;
     setItemForm((prev) => ({
@@ -72,8 +83,8 @@ export default function ComandaPopup() {
 
   const handleAddItem = async (e) => {
     e.preventDefault();
-    if (!comanda || !itemForm.Descricao) {
-      setError('Preencha a descrição do produto');
+    if (!comanda || !itemForm.CodProduto) {
+      setError('Selecione um produto');
       return;
     }
 
@@ -134,12 +145,16 @@ export default function ComandaPopup() {
     return <div className="comanda-popup error"><p>Erro: {error}</p></div>;
   }
 
-  const apartmentInfo = apartment ? `${apartment.numero} (${apartment.tipoDescricao})` : 'N/A';
+  if (!comanda) {
+    return <div className="comanda-popup"><p>Comanda não encontrada</p></div>;
+  }
+
+  const apartmentInfo = apartment ? `${apartment.numero} (${apartment.tipoDescricao})` : comanda.apartamentoId;
 
   return (
     <div className="comanda-popup">
       <div className="comanda-header">
-        <h2>Comanda {comanda ? `#${comanda.id}` : '(Nova)'}</h2>
+        <h2>Comanda #{comanda.id}</h2>
         <button className="close-btn" onClick={() => window.close()}>×</button>
       </div>
 
@@ -153,56 +168,77 @@ export default function ComandaPopup() {
             {apartment?.statusLabel || 'N/A'}
           </span>
         </p>
-        {comanda && (
-          <>
-            <p><strong>Usuário:</strong> {comanda.usuario || 'N/A'}</p>
-            <p><strong>Entrada:</strong> {comanda.dataEntrada} às {comanda.horaEntrada}</p>
-          </>
+        <p><strong>Usuário:</strong> {comanda.usuario || 'N/A'}</p>
+        <p><strong>Entrada:</strong> {comanda.dataEntrada} às {comanda.horaEntrada}</p>
+        
+        {comanda && (apartment?.status === 'O' || apartment?.status === 'C') && (
+          <div className="comanda-fields">
+            <div className="field-group">
+              <label htmlFor="placa">Placa:</label>
+              <input
+                id="placa"
+                type="text"
+                name="Placa"
+                value={comandaForm.Placa}
+                onChange={handleComandaChange}
+                placeholder="Digite a placa do veículo"
+              />
+            </div>
+            <div className="field-group">
+              <label htmlFor="cliente">Cliente:</label>
+              <input
+                id="cliente"
+                type="text"
+                name="ClienteComanda"
+                value={comandaForm.ClienteComanda}
+                onChange={handleComandaChange}
+                placeholder="Nome do cliente"
+              />
+            </div>
+          </div>
         )}
       </div>
 
-      {comanda && (
-        <div className="comanda-items">
-          <h3>Itens</h3>
-          {comanda.itens && comanda.itens.length > 0 ? (
-            <table className="items-table">
-              <thead>
-                <tr>
-                  <th>Produto</th>
-                  <th>Qtd</th>
-                  <th>Valor</th>
-                  <th>Total</th>
-                  {(apartment?.status === 'O' || apartment?.status === 'C') && <th>Ação</th>}
+      <div className="comanda-items">
+        <h3>Itens</h3>
+        {comanda.itens && comanda.itens.length > 0 ? (
+          <table className="items-table">
+            <thead>
+              <tr>
+                <th>Produto</th>
+                <th>Qtd</th>
+                <th>Valor</th>
+                <th>Total</th>
+                {(apartment?.status === 'O' || apartment?.status === 'C') && <th>Ação</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {comanda.itens.map((item) => (
+                <tr key={item.id} className={item.ativo ? '' : 'inativo'}>
+                  <td>{item.descricao}</td>
+                  <td>{item.quantidade}</td>
+                  <td>R$ {parseFloat(item.valor).toFixed(2)}</td>
+                  <td>R$ {(item.quantidade * item.valor).toFixed(2)}</td>
+                  {(apartment?.status === 'O' || apartment?.status === 'C') && (
+                    <td>
+                      <button
+                        onClick={() => handleToggleItem(item.id)}
+                        className={`toggle-btn ${item.ativo ? 'ativo' : 'inativo'}`}
+                      >
+                        {item.ativo ? 'Remover' : 'Readicionar'}
+                      </button>
+                    </td>
+                  )}
                 </tr>
-              </thead>
-              <tbody>
-                {comanda.itens.map((item) => (
-                  <tr key={item.id} className={item.ativo ? '' : 'inativo'}>
-                    <td>{item.descricao}</td>
-                    <td>{item.quantidade}</td>
-                    <td>R$ {parseFloat(item.valor).toFixed(2)}</td>
-                    <td>R$ {(item.quantidade * item.valor).toFixed(2)}</td>
-                    {(apartment?.status === 'O' || apartment?.status === 'C') && (
-                      <td>
-                        <button
-                          onClick={() => handleToggleItem(item.id)}
-                          className={`toggle-btn ${item.ativo ? 'ativo' : 'inativo'}`}
-                        >
-                          {item.ativo ? 'Remover' : 'Readicionar'}
-                        </button>
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="no-items">Nenhum item adicionado</p>
-          )}
-        </div>
-      )}
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="no-items">Nenhum item adicionado</p>
+        )}
+      </div>
 
-      {(apartment?.status === 'O' || apartment?.status === 'C') && comanda && (
+      {(apartment?.status === 'O' || apartment?.status === 'C') && (
         <div className="comanda-form">
           <h3>Adicionar Item</h3>
           <form onSubmit={handleAddItem}>
@@ -238,12 +274,10 @@ export default function ComandaPopup() {
       )}
 
       <div className="comanda-footer">
-        {comanda && (
-          <div className="total">
-            <strong>Total:</strong>
-            <span>R$ {comanda.valorTotal ? parseFloat(comanda.valorTotal).toFixed(2) : '0.00'}</span>
-          </div>
-        )}
+        <div className="total">
+          <strong>Total:</strong>
+          <span>R$ {comanda.valorTotal ? parseFloat(comanda.valorTotal).toFixed(2) : '0.00'}</span>
+        </div>
         <div className="actions">
           {updatingStatus && <p>Atualizando status...</p>}
           
@@ -274,26 +308,6 @@ export default function ComandaPopup() {
               disabled={updatingStatus}
             >
               Finalizar
-            </button>
-          )}
-          
-          {apartment?.status === 'R' && (
-            <button 
-              className="btn-limpeza" 
-              onClick={() => handleStatusChange('Z')}
-              disabled={updatingStatus}
-            >
-              Ir para Limpeza
-            </button>
-          )}
-          
-          {apartment?.status === 'Z' && (
-            <button 
-              className="btn-finalizar" 
-              onClick={() => handleStatusChange('L')}
-              disabled={updatingStatus}
-            >
-              Finalizar Comanda
             </button>
           )}
           
