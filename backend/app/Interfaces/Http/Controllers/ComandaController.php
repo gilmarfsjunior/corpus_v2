@@ -101,6 +101,57 @@ class ComandaController
         );
     }
 
+    public function porApartamento(int $id): Response
+    {
+        try {
+            // Buscar comanda ativa do apartamento
+            $comanda = $this->repository->buscarPorApartamentoAtiva($id);
+
+            if ($comanda === null) {
+                // Se não existe comanda ativa, criar uma nova
+                $dataNow = date('Y-m-d');
+                $horaNow = date('H:i:s');
+                
+                $novaComanda = new Comanda(
+                    0,
+                    $id,
+                    $dataNow,
+                    $horaNow,
+                    null,
+                    null,
+                    $_SESSION['user'] ?? 'SISTEMA',
+                    $_SESSION['empresa'] ?? '1',
+                    '',
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    false,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null
+                );
+
+                $useCase = new SalvarComandaUseCase($this->repository);
+                $id = $useCase->execute($novaComanda);
+
+                $comanda = $this->repository->buscarPorId($id);
+            }
+
+            if ($comanda === null) {
+                return Response::json(['message' => 'Erro ao buscar ou criar comanda'], 500);
+            }
+
+            return Response::json(['data' => $comanda->toArray()]);
+        } catch (\Exception $e) {
+            return Response::json(['message' => $e->getMessage()], 500);
+        }
+    }
+
     private function getRequestData(): array
     {
         $body = file_get_contents('php://input');

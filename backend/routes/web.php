@@ -17,6 +17,7 @@ return [
     'GET' => [
         '/api/apartamentos' => [ApartmentController::class, 'index'],
         '/api/apartamentos/{id}' => [ApartmentController::class, 'show'],
+        '/api/apartamentos/{id}/comanda' => [ComandaController::class, 'porApartamento'],
         '/api/produtos' => [ProdutoController::class, 'index'],
         '/api/produtos/{id}' => [ProdutoController::class, 'show'],
         '/api/comandas' => [ComandaController::class, 'index'],

@@ -4,6 +4,7 @@ import ProdutoList from '../modules/produto/pages/ProdutoList';
 import ComandaList from '../modules/comanda/pages/ComandaList';
 import ComandaDetails from '../modules/comanda/pages/ComandaDetails';
 import ComandaForm from '../modules/comanda/pages/ComandaForm';
+import ComandaPopup from '../modules/comanda/pages/ComandaPopup';
 import MovimentoList from '../modules/movimento/pages/MovimentoList';
 import MovimentoDetails from '../modules/movimento/pages/MovimentoDetails';
 import MovimentoForm from '../modules/movimento/pages/MovimentoForm';
@@ -33,6 +34,7 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+      <Route path="/comanda/:id" element={<ComandaPopup />} />
       <Route path="/produtos" element={<ProtectedRoute><ProdutoList /></ProtectedRoute>} />
       <Route path="/comandas" element={<ProtectedRoute><ComandaList /></ProtectedRoute>} />
       <Route path="/comandas/novo" element={<ProtectedRoute><ComandaForm /></ProtectedRoute>} />

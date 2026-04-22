@@ -72,6 +72,30 @@ class ComandaRepository implements ComandaRepositoryInterface
         return $comanda;
     }
 
+    public function buscarPorApartamentoAtiva(int $apartamentoId): ?Comanda
+    {
+        // Busca a comanda mais recente do apartamento que ainda está ativa (sem data de saída)
+        $sql = 'SELECT tcomanda.CodComanda AS id, tcomanda.* 
+                FROM tcomanda 
+                WHERE CodApartamento = :apartamentoId 
+                AND DataSaida IS NULL 
+                ORDER BY CodComanda DESC 
+                LIMIT 1';
+        
+        $statement = $this->connection->getPdo()->prepare($sql);
+        $statement->execute([':apartamentoId' => $apartamentoId]);
+
+        $row = $statement->fetch(PDO::FETCH_ASSOC);
+        if ($row === false) {
+            return null;
+        }
+
+        $comanda = Comanda::fromDatabaseRow($row);
+        $comanda = $comanda->withItens($this->listarItens($row['id']));
+
+        return $comanda;
+    }
+
     public function listarItens(int $codComanda): array
     {
         $sql = 'SELECT ti.CodItem, ti.CodComanda, ti.CodProduto, tp.Descricao AS Descricao, ti.Quantidade, ti.Valor, ti.Ativo, tp.Descricao AS Nome
