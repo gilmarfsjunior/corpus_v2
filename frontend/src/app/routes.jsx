@@ -35,6 +35,7 @@ export default function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
       <Route path="/comanda/:id" element={<ComandaPopup />} />
+      <Route path="/comanda/apartamento/:apartmentId" element={<ComandaPopup />} />
       <Route path="/produtos" element={<ProtectedRoute><ProdutoList /></ProtectedRoute>} />
       <Route path="/comandas" element={<ProtectedRoute><ComandaList /></ProtectedRoute>} />
       <Route path="/comandas/novo" element={<ProtectedRoute><ComandaForm /></ProtectedRoute>} />

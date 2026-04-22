@@ -5,9 +5,12 @@ import { criarComandaItem, alterarStatusComandaItem } from '../services/comandaI
 import './ComandaPopup.css';
 
 export default function ComandaPopup() {
-  const { id } = useParams();
+  const { id, apartmentId: routeApartmentId } = useParams();
   const [searchParams] = useSearchParams();
-  const apartmentId = searchParams.get('apartamento');
+  const queryApartmentId = searchParams.get('apartamento');
+  
+  // Prioriza o apartmentId da rota, depois o da query string
+  const apartmentId = routeApartmentId || queryApartmentId;
   
   const [comanda, setComanda] = useState(null);
   const [apartment, setApartment] = useState(null);

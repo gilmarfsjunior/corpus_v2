@@ -46,8 +46,8 @@ export default function ApartmentDashboard() {
   const handleApartmentClick = (apartment) => {
     // Lógica para abrir a comanda
     console.log('Clicou no apartamento:', apartment);
-    // Abre comanda em nova janela
-    window.open(`/comanda/0?apartamento=${apartment.id}`, 'comanda_' + apartment.numero, 'width=900,height=700');
+    // Abre comanda em nova janela passando apenas o ID do apartamento
+    window.open(`/comanda/apartamento/${apartment.id}`, 'comanda_' + apartment.numero, 'width=900,height=700');
   };
 
   if (loading) {
